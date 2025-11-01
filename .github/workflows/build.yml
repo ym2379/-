@@ -14,26 +14,21 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Setup Theos
+    - name: Setup Theos and SDK
       run: |
+        # 设置 Theos
         export THEOS=/opt/theos
         sudo mkdir -p $THEOS
         sudo chown -R $(whoami):staff $THEOS
+        
+        # 克隆 Theos
         git clone --depth=1 https://github.com/theos/theos.git $THEOS
         
-    - name: Download and Extract iOS SDK
-      run: |
-        export THEOS=/opt/theos
-        cd $THEOS/sdks
-        # 使用更稳定的 SDK 下载方式
-        curl -L -o iPhoneOS13.7.sdk.tar.xz https://github.com/theos/sdks/releases/download/master/iPhoneOS13.7.sdk.tar.xz
-        # 检查文件
-        file iPhoneOS13.7.sdk.tar.xz
-        ls -lh iPhoneOS13.7.sdk.tar.xz
-        # 解压
-        tar -xf iPhoneOS13.7.sdk.tar.xz
-        rm iPhoneOS13.7.sdk.tar.xz
-        ls -la
+        # 下载并安装 SDK（使用 Theos 的 sdks-manager）
+        bash $THEOS/bin/install-theos-sdk https://github.com/theos/sdks/releases/download/master/iPhoneOS13.7.sdk.tar.xz
+        
+        # 验证 SDK
+        ls -la $THEOS/sdks/
         
     - name: Build Package
       run: |
@@ -41,6 +36,13 @@ jobs:
         export PATH=$THEOS/bin:$PATH
         make clean
         make package FINALPACKAGE=1
+        
+    - name: List Build Output
+      run: |
+        echo "=== Packages ==="
+        ls -lh packages/ || echo "No packages directory"
+        echo "=== DYLIB ==="
+        find .theos -name "*.dylib" -exec ls -lh {} \;
         
     - name: Upload DEB Package
       uses: actions/upload-artifact@v4
