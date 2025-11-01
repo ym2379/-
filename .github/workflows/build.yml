@@ -14,10 +14,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Install Dependencies
-      run: |
-        brew install ldid
-        
     - name: Setup Theos
       run: |
         export THEOS=/opt/theos
@@ -25,11 +21,16 @@ jobs:
         sudo chown -R $(whoami):staff $THEOS
         git clone --depth=1 https://github.com/theos/theos.git $THEOS
         
-    - name: Download iOS SDK
+    - name: Download and Extract iOS SDK
       run: |
         export THEOS=/opt/theos
         cd $THEOS/sdks
-        curl -LO https://github.com/theos/sdks/releases/download/master/iPhoneOS13.7.sdk.tar.xz
+        # 使用更稳定的 SDK 下载方式
+        curl -L -o iPhoneOS13.7.sdk.tar.xz https://github.com/theos/sdks/releases/download/master/iPhoneOS13.7.sdk.tar.xz
+        # 检查文件
+        file iPhoneOS13.7.sdk.tar.xz
+        ls -lh iPhoneOS13.7.sdk.tar.xz
+        # 解压
         tar -xf iPhoneOS13.7.sdk.tar.xz
         rm iPhoneOS13.7.sdk.tar.xz
         ls -la
