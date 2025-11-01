@@ -8,33 +8,49 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    
+      
+    - name: Install Dependencies
+      run: |
+        brew install ldid
+        
     - name: Setup Theos
       run: |
         export THEOS=/opt/theos
-        git clone --recursive https://github.com/theos/theos.git $THEOS
+        sudo mkdir -p $THEOS
+        sudo chown -R $(whoami):staff $THEOS
+        git clone --depth=1 https://github.com/theos/theos.git $THEOS
+        
+    - name: Download iOS SDK
+      run: |
+        export THEOS=/opt/theos
+        cd $THEOS/sdks
         curl -LO https://github.com/theos/sdks/releases/download/master/iPhoneOS13.7.sdk.tar.xz
-        tar -xf iPhoneOS13.7.sdk.tar.xz -C $THEOS/sdks
+        tar -xf iPhoneOS13.7.sdk.tar.xz
         rm iPhoneOS13.7.sdk.tar.xz
-    
+        ls -la
+        
     - name: Build Package
       run: |
         export THEOS=/opt/theos
+        export PATH=$THEOS/bin:$PATH
         make clean
         make package FINALPACKAGE=1
-    
-    - name: Upload DEB
+        
+    - name: Upload DEB Package
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: wapleodtcorexpc-deb
         path: packages/*.deb
-    
+        
     - name: Upload DYLIB
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: wapleodtcorexpc-dylib
         path: .theos/obj/arm64/*.dylib
